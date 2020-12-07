@@ -12,6 +12,11 @@ var (
 	limit = 1130000
 )
 
+func ticketNumToThree(num int) int {
+	fmt.Println(num)
+	return num
+}
+
 func main() {
 	f, err := excelize.OpenFile("base.xlsx")
 	if err != nil {
@@ -27,6 +32,7 @@ func main() {
 	for i := 0; i < len(rows); i++ {
 		row := rows[i]
 		if len(row) > 0 {
+			row = row[:7]
 			if row[0] == "客户名称:" {
 				customerName = row[1]
 				customerIndex++
@@ -48,45 +54,71 @@ func main() {
 	// 大于limit的对半分
 	for _, items := range baseSlice {
 		for index, item := range items {
-			itemPrice, _ := strconv.Atoi(item[7])
-			if itemPrice > limit {
+			itemSum, _ := strconv.Atoi(item[7])
+			if itemSum > limit {
+				// first
 				itemNumber, _ := strconv.Atoi(item[5])
 				splitNumber := itemNumber / 2
-				fmt.Println(splitNumber)
-				items = append(items[:index+1], append([][]string{item}, items[index+1:]...)...)
+				item[5] = strconv.Itoa(splitNumber)
+				itemPrice, _ := strconv.Atoi(item[6])
+				item[7] = strconv.Itoa(splitNumber * itemPrice)
+				// second
+				newItem := make([]string, len(item), cap(item))
+				copy(newItem, item)
+				newItem[5] = strconv.Itoa(itemNumber - splitNumber)
+				newItem[7] = strconv.Itoa((itemNumber - splitNumber) * itemPrice)
+				items = append(items[:index+1], append([][]string{newItem}, items[index+1:]...)...)
 			}
 		}
 	}
 
 	// 添加群组号
-	// ticketNum := 1
-	// for _, items := range baseSlice {
-	// 	accrued := 0
-	// 	for _, item := range items {
-	// 		itemPrice, _ := strconv.Atoi(item[7])
-	// 		// fmt.Println(itemPrice + accrued)
-	// 		if itemPrice+accrued < limit {
-	// 			accrued = itemPrice + accrued
-	// 			item[0] = strconv.Itoa(ticketNum)
-	// 		} else {
-	// 			ticketNum++
-	// 			item[0] = strconv.Itoa(ticketNum)
-	// 			accrued = itemPrice
-	// 		}
-	// 		fmt.Println(item)
-	// 	}
-	// 	fmt.Println("")
-	// 	ticketNum++
-	// }
-
+	ticketNum := 1
 	for _, items := range baseSlice {
+		accrued := 0
 		for _, item := range items {
-			fmt.Println(item)
+			itemPrice, _ := strconv.Atoi(item[7])
+			if itemPrice+accrued < limit {
+				accrued = itemPrice + accrued
+				item[0] = strconv.Itoa(ticketNumToThree(ticketNum))
+			} else {
+				ticketNum++
+				item[0] = strconv.Itoa(ticketNum)
+				accrued = itemPrice
+			}
 		}
-		fmt.Println("")
+		ticketNum++
 	}
 
-	// if err := f.SaveAs("Book1.xlsx"); err != nil {
-	// 	fmt.Println(err)
-	// }
+	// 生成excel
+	res := excelize.NewFile()
+	sheetName := res.NewSheet("模板")
+	res.SetActiveSheet(sheetName)
+	// 表头
+	res.SetSheetRow("模板", "A1", &[]interface{}{
+		"群组", "发票明细", "客户", "单位", "规格型号", "数量", "单价", "金额",
+		"备注", 1, 2, 3, 4, 5, 6, 7, "收款人", "审核人", "默认税率", "开票类型", "折扣金额"})
+	index := 2
+	for _, items := range baseSlice {
+		for _, item := range items {
+			res.SetSheetRow("模板", "A"+strconv.Itoa(index), &item)
+			index++
+		}
+	}
+	// 格式转换
+	cols, _ := res.GetCols("模板")
+	for colIndex, col := range cols {
+		for rowIndex, rowCell := range col {
+			if colIndex == 0 || colIndex == 5 || colIndex == 6 || colIndex == 7 {
+				if rowIndex > 0 {
+					val, _ := strconv.Atoi(rowCell)
+					cellCoordinates, _ := excelize.CoordinatesToCellName(colIndex+1, rowIndex+1)
+					res.SetCellInt("模板", cellCoordinates, val)
+				}
+			}
+		}
+	}
+	if err := res.SaveAs("Book1.xlsx"); err != nil {
+		fmt.Println(err)
+	}
 }
