@@ -12,9 +12,15 @@ var (
 	limit = 1130000
 )
 
-func ticketNumToThree(num int) int {
-	fmt.Println(num)
-	return num
+func ticketNumToThree(num int) string {
+	s := strconv.Itoa(num)
+	if len(s) == 1 {
+		s = "00" + s
+	}
+	if len(s) == 2 {
+		s = "0" + s
+	}
+	return s
 }
 
 func main() {
@@ -80,10 +86,10 @@ func main() {
 			itemPrice, _ := strconv.Atoi(item[7])
 			if itemPrice+accrued < limit {
 				accrued = itemPrice + accrued
-				item[0] = strconv.Itoa(ticketNumToThree(ticketNum))
+				item[0] = ticketNumToThree(ticketNum)
 			} else {
 				ticketNum++
-				item[0] = strconv.Itoa(ticketNum)
+				item[0] = ticketNumToThree(ticketNum)
 				accrued = itemPrice
 			}
 		}
@@ -109,7 +115,7 @@ func main() {
 	cols, _ := res.GetCols("模板")
 	for colIndex, col := range cols {
 		for rowIndex, rowCell := range col {
-			if colIndex == 0 || colIndex == 5 || colIndex == 6 || colIndex == 7 {
+			if colIndex == 5 || colIndex == 6 || colIndex == 7 {
 				if rowIndex > 0 {
 					val, _ := strconv.Atoi(rowCell)
 					cellCoordinates, _ := excelize.CoordinatesToCellName(colIndex+1, rowIndex+1)
