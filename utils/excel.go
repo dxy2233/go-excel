@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"io"
 	"strconv"
 	"unicode"
 
@@ -22,11 +23,14 @@ func ticketNumToThree(num int) string {
 	}
 	return s
 }
-func xx() {
-	f, err := excelize.OpenFile("base.xlsx")
+
+// ProcessedExcel 处理excel
+func ProcessedExcel(file io.Reader) (*excelize.File, error) {
+	// f, err := excelize.OpenFile("base.xlsx")
+	f, err := excelize.OpenReader(file)
 	if err != nil {
 		fmt.Println(err)
-		return
+		return nil, err
 	}
 
 	// 过滤数据，添加公司名, 按公司名分组
@@ -123,7 +127,5 @@ func xx() {
 			}
 		}
 	}
-	if err := res.SaveAs("Book1.xlsx"); err != nil {
-		fmt.Println(err)
-	}
+	return res, nil
 }
