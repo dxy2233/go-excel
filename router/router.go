@@ -12,6 +12,7 @@ import (
 func Lent() *mux.Router {
 	r := mux.NewRouter()
 	r.HandleFunc("/index", upload).Methods("POST", "OPTIONS")
+	r.HandleFunc("/index222", test).Methods("GET")
 	r.Use(corsMiddleware)
 	return r
 }
@@ -21,6 +22,10 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		next.ServeHTTP(w, r)
 	})
+}
+
+func test(w http.ResponseWriter, r *http.Request) {
+	w.Write([]byte("foo"))
 }
 
 func upload(w http.ResponseWriter, r *http.Request) {
