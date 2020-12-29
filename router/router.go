@@ -2,17 +2,16 @@ package router
 
 import (
 	"fmt"
-	"invoice/utils"
 	"net/http"
+	"oppo-excel/utils"
 
 	"github.com/gorilla/mux"
 )
 
-// Lent 路由创建
-func Lent() *mux.Router {
+// Init 路由创建
+func Init() *mux.Router {
 	r := mux.NewRouter()
-	r.HandleFunc("/index", upload).Methods("POST", "OPTIONS")
-	r.HandleFunc("/index222", test).Methods("GET")
+	r.HandleFunc("/upload", upload).Methods("POST", "OPTIONS")
 	r.Use(corsMiddleware)
 	return r
 }
@@ -22,10 +21,6 @@ func corsMiddleware(next http.Handler) http.Handler {
 		w.Header().Set("Access-Control-Allow-Origin", "*")
 		next.ServeHTTP(w, r)
 	})
-}
-
-func test(w http.ResponseWriter, r *http.Request) {
-	w.Write([]byte("foo"))
 }
 
 func upload(w http.ResponseWriter, r *http.Request) {
